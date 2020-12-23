@@ -19,6 +19,9 @@ class UI{
             const book = new Book(title.value,author.value,isbn.value);
         
             this.addBookToList(book);
+            //   persist
+            Store.addBook(book);
+
             this.clearFields();
             UI.showAlert('Add book success!','success');
         }
@@ -51,6 +54,7 @@ class UI{
 
     removeBook(e){
         if(e.target.className === 'delete'){
+            Store.removeBook(e.target.parentElement.previousElementSibling.textContent);
             e.target.parentElement.parentElement.remove();
             UI.showAlert('Remove book success!','success');
         }
@@ -85,10 +89,63 @@ class UI{
 }
 
 
+
+class Store{
+    static key = 'books';
+
+    static getBooks(){
+        let books;
+        if(localStorage.getItem(Store.key) === null){
+            books = []
+        }else{
+            books = JSON.parse(localStorage.getItem(Store.key));
+        }
+
+        return books;
+    }
+
+    static displayBooks(){
+        let books = Store.getBooks();
+
+        const ui = new UI();
+
+        books.forEach(book => {
+            ui.addBookToList(book);
+        })
+    }
+
+    static removeBook(isbn){
+        console.log(isbn)
+        let books = Store.getBooks();
+
+        books.forEach((book,index) => {
+            if(book.isbn === isbn){
+                books.splice(index,1);
+                return;
+            }
+        })
+
+        localStorage.setItem(Store.key,JSON.stringify(books));
+    }
+
+    static addBook(newBook){
+        let books = Store.getBooks();
+        const existingBook = books.find(book => book.ibsn === newBook.isbn);
+        if(!existingBook){
+            books.push(newBook);
+        }
+
+        localStorage.setItem(Store.key,JSON.stringify(books));
+
+    }
+}
+
+
 function loadDocumentListener(){
     const ui = new UI();
     // addEventListener 会改变this指向
     // form.addEventListener('submit',ui.handleSubmit); error
+    document.addEventListener('DOMContentLoaded',Store.displayBooks);
     form.addEventListener('submit',e => ui.handleSubmit(e));
     bookList.addEventListener('click',e => ui.removeBook(e))
 }
